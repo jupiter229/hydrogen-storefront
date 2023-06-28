@@ -1,9 +1,8 @@
+import {useLoaderData} from '@remix-run/react';
+import type {Collection as CollectionType} from '@shopify/hydrogen/storefront-api-types';
+import {LoaderArgs, json} from '@shopify/remix-oxygen';
 
-import { LoaderArgs, json } from "@shopify/remix-oxygen";
-import type { Collection as CollectionType } from "@shopify/hydrogen/storefront-api-types";
-import { useLoaderData } from "@remix-run/react";
-
-export async function loader({params, context}: LoaderArgs ) {
+export async function loader({params, context}: LoaderArgs) {
   const {handle} = params;
   const {collection} = await context.storefront.query<{
     collection: CollectionType;
@@ -44,7 +43,7 @@ export default function Collection() {
         )}
       </header>
     </>
-  )
+  );
 }
 
 const COLLECTION_QUERY = `#graphql
@@ -56,3 +55,11 @@ const COLLECTION_QUERY = `#graphql
     }
   }
 `;
+const seo = ({data}: {data: {collection: CollectionType}}) => ({
+  title: data?.collection?.title,
+  description: data?.collection?.description.substr(0, 154),
+});
+
+export const handle = {
+  seo,
+};
