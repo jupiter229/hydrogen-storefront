@@ -2,6 +2,7 @@ import {useLoaderData} from '@remix-run/react';
 import type {Product} from '@shopify/hydrogen/storefront-api-types';
 import type {LoaderArgs} from '@shopify/remix-oxygen';
 import {json} from '@shopify/remix-oxygen';
+import {ProductGallery} from '~/components/ProductGallery';
 
 export async function loader({params, context}: LoaderArgs) {
   const {handle} = params;
@@ -22,6 +23,7 @@ export async function loader({params, context}: LoaderArgs) {
     product,
   });
 }
+
 export default function ProductHandle() {
   const {product} = useLoaderData() as {product: Product};
   return (
@@ -29,7 +31,7 @@ export default function ProductHandle() {
       <div className="grid items-start gap-6 lg:gap-20 md:grid-cols-2 lg:grid-cols-3">
         <div className="grid md:grid-flow-row  md:p-0 md:overflow-x-hidden md:grid-cols-2 md:w-full lg:col-span-2">
           <div className="md:col-span-2 snap-center card-image aspect-square md:w-full w-[80vw] shadow rounded">
-            <h2>TODO Product Gallery</h2>
+            <ProductGallery media={product.media.nodes} />
           </div>
         </div>
         <div className="md:sticky md:mx-auto max-w-xl md:max-w-[24rem] grid gap-8 p-0 md:p-6 md:px-0 top-[6rem] lg:top-[8rem] xl:top-[10rem]">
