@@ -58,6 +58,10 @@ const COLLECTION_QUERY = `#graphql
       description
       handle
       products(first: 10) {
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+        }
         nodes {
           id
           title
