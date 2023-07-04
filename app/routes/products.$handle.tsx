@@ -1,16 +1,27 @@
 import {useLoaderData} from '@remix-run/react';
-import type {Product} from '@shopify/hydrogen/storefront-api-types';
+import type {
+  Product,
+  SelectedOptionInput,
+} from '@shopify/hydrogen/storefront-api-types';
 import type {LoaderArgs} from '@shopify/remix-oxygen';
 import {json} from '@shopify/remix-oxygen';
 import {ProductGallery} from '~/components/ProductGallery';
+import ProductOptions from '~/components/ProductOption';
 
-export async function loader({params, context}: LoaderArgs) {
+export async function loader({params, context, request}: LoaderArgs) {
   const {handle} = params;
+  const searchParams = new URL(request.url).searchParams;
+  const selectedOptions: SelectedOptionInput[] = [];
+  searchParams.forEach((value, name) => {
+    selectedOptions.push({name, value});
+  });
+
   const {product} = await context.storefront.query<{product: Product}>(
     PRODUCT_QUERY,
     {
       variables: {
         handle,
+        selectedOptions,
       },
     },
   );
@@ -43,7 +54,7 @@ export default function ProductHandle() {
               {product.vendor}
             </span>
           </div>
-          <h3>Product Options TODO</h3>
+          <ProductOptions options={product.options} />
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{__html: product.descriptionHtml}}

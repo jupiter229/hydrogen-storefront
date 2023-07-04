@@ -1,6 +1,6 @@
-import { useFetcher } from '@remix-run/react';
-import type { Collection, Product } from '@shopify/hydrogen/storefront-api-types';
-import { useEffect, useState } from 'react';
+import {useFetcher} from '@remix-run/react';
+import type {Collection, Product} from '@shopify/hydrogen/storefront-api-types';
+import {useEffect, useState} from 'react';
 import ProductCard from './ProductCard';
 
 interface Props {
