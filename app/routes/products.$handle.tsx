@@ -1,4 +1,5 @@
 import {useLoaderData} from '@remix-run/react';
+import {Money, ShopPayButton} from '@shopify/hydrogen';
 import type {
   Product,
   ProductVariant,
@@ -10,6 +11,8 @@ import {ProductGallery} from '~/components/ProductGallery';
 import ProductOptions from '~/components/ProductOption';
 
 export async function loader({params, context, request}: LoaderArgs) {
+  const storeDomain = context.storefront.getShopifyDomain();
+
   const {handle} = params;
   const searchParams = new URL(request.url).searchParams;
 
@@ -24,11 +27,10 @@ export async function loader({params, context, request}: LoaderArgs) {
       variables: {
         handle,
         selectedOptions,
+        storeDomain,
       },
     },
   );
-
-  console.log('product ', product);
 
   const selectedVariant: ProductVariant =
     product?.selectedVariant ?? product?.variants?.nodes[0];
@@ -40,14 +42,18 @@ export async function loader({params, context, request}: LoaderArgs) {
   return json({
     product,
     selectedVariant,
+    storeDomain,
   });
 }
 
 export default function ProductHandle() {
-  const {product, selectedVariant} = useLoaderData() as {
+  const {product, selectedVariant, storeDomain} = useLoaderData() as {
     product: Product;
     selectedVariant: ProductVariant;
+    storeDomain: string;
   };
+
+  const orderable = selectedVariant?.availableForSale || false;
 
   return (
     <section className="w-full gap-4 md:gap-8 grid px-6 md:px-8 lg:px-12">
@@ -70,9 +76,21 @@ export default function ProductHandle() {
             options={product.options}
             selectedVariant={selectedVariant}
           />
-          {/* Delete this after verifying */}
-          <p>Selected Variant: {selectedVariant?.title}</p>
-
+          <Money
+            withoutTrailingZeros
+            data={selectedVariant.price}
+            className="text-2xl font-bold leading-10 whitespace-normal"
+          />
+          {orderable && (
+            <div className="space-y-2">
+              <ShopPayButton
+                storeDomain={storeDomain}
+                variantIds={[selectedVariant?.id]}
+                width={'400px'}
+              />
+              {/* TODO product form */}
+            </div>
+          )}
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
