@@ -1,18 +1,57 @@
-import {Link, useLocation} from '@remix-run/react';
-import type {ProductOptionsArgs} from '@shopify/hydrogen/storefront-api-types';
+import {
+  Link,
+  Path,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from '@remix-run/react';
+import type {
+  ProductOption,
+  ProductVariant,
+} from '@shopify/hydrogen/storefront-api-types';
+import {Key} from 'react';
 
-export default function ProductOptions({options}: ProductOptionsArgs) {
-  // pathname and search will be used to build option URLs
-  const {pathname, search} = useLocation();
+interface Location extends Path {
+  state: any;
+  key: Key;
+}
+
+export default function ProductOptions({
+  options,
+  selectedVariant,
+}: {
+  options: ProductOption[];
+  selectedVariant: ProductVariant;
+}) {
+  const {pathname, search} = useLocation() as Location;
+  const [currentSearchParams] = useSearchParams();
+  const navigation = useNavigate();
+
+  const paramsWithDefaults = (() => {
+    const defaultParams = new URLSearchParams(currentSearchParams);
+    if (!selectedVariant) return defaultParams;
+
+    selectedVariant.selectedOptions.forEach((option) => {
+      if (!currentSearchParams.has(option.name)) {
+        defaultParams.set(option.name, option.value);
+      }
+    });
+    return defaultParams;
+  })();
+
+  const searchParams = navigation.location
+    ? new URLSearchParams(navigation.location.search)
+    : paramsWithDefaults;
 
   return (
     <div className="grid gap-4 mb-6">
-      {/* Each option will show a label and option value <Links> */}
       {options.map((option) => {
         if (!option.values.length) {
           return;
         }
 
+        // get the currently selected option value
+        const currentOptionVal = searchParams.get(option.name);
         return (
           <div
             key={option.name}
@@ -24,9 +63,8 @@ export default function ProductOptions({options}: ProductOptionsArgs) {
 
             <div className="flex flex-wrap items-baseline gap-4">
               {option.values.map((value) => {
-                // Build a URLSearchParams object from the current search string
-                const linkParams = new URLSearchParams(search);
-                // Set the option name and value, overwriting any existing values
+                const linkParams = new URLSearchParams(searchParams);
+                const isSelected = currentOptionVal === value;
                 linkParams.set(option.name, value);
                 return (
                   <Link
@@ -34,7 +72,9 @@ export default function ProductOptions({options}: ProductOptionsArgs) {
                     to={`${pathname}?${linkParams.toString()}`}
                     preventScrollReset
                     replace
-                    className="leading-none py-1 border-b-[1.5px] cursor-pointer transition-all duration-200"
+                    className={`leading-none py-1 border-b-[1.5px] cursor-pointer transition-all duration-200 ${
+                      isSelected ? 'border-gray-500' : 'border-neutral-50'
+                    }`}
                   >
                     {value}
                   </Link>

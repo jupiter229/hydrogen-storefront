@@ -1,6 +1,7 @@
 import {useLoaderData} from '@remix-run/react';
 import type {
   Product,
+  ProductVariant,
   SelectedOptionInput,
 } from '@shopify/hydrogen/storefront-api-types';
 import type {LoaderArgs} from '@shopify/remix-oxygen';
@@ -11,6 +12,7 @@ import ProductOptions from '~/components/ProductOption';
 export async function loader({params, context, request}: LoaderArgs) {
   const {handle} = params;
   const searchParams = new URL(request.url).searchParams;
+
   const selectedOptions: SelectedOptionInput[] = [];
   searchParams.forEach((value, name) => {
     selectedOptions.push({name, value});
@@ -26,17 +28,27 @@ export async function loader({params, context, request}: LoaderArgs) {
     },
   );
 
+  console.log('product ', product);
+
+  const selectedVariant: ProductVariant =
+    product?.selectedVariant ?? product?.variants?.nodes[0];
+
   if (!product) {
     throw new Response(null, {status: 404});
   }
 
   return json({
     product,
+    selectedVariant,
   });
 }
 
 export default function ProductHandle() {
-  const {product} = useLoaderData() as {product: Product};
+  const {product, selectedVariant} = useLoaderData() as {
+    product: Product;
+    selectedVariant: ProductVariant;
+  };
+
   return (
     <section className="w-full gap-4 md:gap-8 grid px-6 md:px-8 lg:px-12">
       <div className="grid items-start gap-6 lg:gap-20 md:grid-cols-2 lg:grid-cols-3">
@@ -54,7 +66,13 @@ export default function ProductHandle() {
               {product.vendor}
             </span>
           </div>
-          <ProductOptions options={product.options} />
+          <ProductOptions
+            options={product.options}
+            selectedVariant={selectedVariant}
+          />
+          {/* Delete this after verifying */}
+          <p>Selected Variant: {selectedVariant?.title}</p>
+
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
@@ -66,7 +84,7 @@ export default function ProductHandle() {
 }
 
 const PRODUCT_QUERY = `#graphql
-  query product($handle: String!) {
+  query product($handle: String!, $selectedOptions: [SelectedOptionInput!]!) {
     product(handle: $handle) {
       id
       title
@@ -98,6 +116,58 @@ const PRODUCT_QUERY = `#graphql
       options {
         name,
         values
+      }
+      selectedVariant: variantBySelectedOptions(selectedOptions: $selectedOptions) {
+        id
+        availableForSale
+        selectedOptions {
+          name
+          value
+        }
+        image {
+          id
+          url
+          altText
+          width
+          height
+        }
+        price {
+          amount
+          currencyCode
+        }
+        compareAtPrice {
+          amount
+          currencyCode
+        }
+        sku
+        title
+        unitPrice {
+          amount
+          currencyCode
+        }
+        product {
+          title
+          handle
+        }
+      }
+      variants(first: 1) {
+        nodes {
+          id
+          title
+          availableForSale
+          price {
+            currencyCode
+            amount
+          }
+          compareAtPrice {
+            currencyCode
+            amount
+          }
+          selectedOptions {
+            name
+            value
+          }
+        }
       }
     }
   }
